@@ -7,7 +7,7 @@ import json
 
 #プレイヤー作成
 player = vlc.MediaPlayer("music/ムーンライトSad倍速.mp3")
-
+#sasasa
 #再生
 player.play()
 
@@ -54,7 +54,7 @@ while True:
 
     if current_time_auto != last_beat and current_time_auto % 2 == 0:
         print("現在拍：", current_time_auto)
-        add_note((current_time_auto * beat_time), 0)
+        #add_note((current_time_auto * beat_time), 0)
 
     # 表示した拍を記憶
     last_beat = current_time_auto
