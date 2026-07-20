@@ -16,7 +16,7 @@ import json
 # ==========================================================
 MODEL_PATH = "hand_landmarker.task"
 BGM_PATH = "bgm1.mp3"
-SHEET_PATH = "sheet.json"
+SHEET_PATH = "notes.json"
 
 # ファイルが存在するか念のためチェック（エラー防止）
 if not os.path.exists(MODEL_PATH):
@@ -85,9 +85,7 @@ def main():
         })
     pygame.mixer.init()
 
-    if os.path.exists(BGM_PATH):
-        pygame.mixer.music.load(BGM_PATH)
-        pygame.mixer.music.play() #-1：無限ループ
+    
 
 
     # STEP 1: ローカルのモデルから PoseLandmarker を初期化
@@ -106,14 +104,9 @@ def main():
     #ノーツの設定
     num_lanes = 8
     center_x, center_y = 320, 240 #画面の中心座標
-    judge_radius = 200 #中心から判定ラインまでの距離
-    scroll_time = 2000 #2000ms
+    judge_radius = 240 #中心から判定ラインまでの距離
+    scroll_time = 1000 #2000ms
     note_radius = 20
-
-    # lane_width = 640 // num_lanes #//：切り捨て除算
-    # judge_line_y = 400 #判定ライン
-    # scroll_time = 1000 #落ちてくる時間（1秒）
-    # note_radius = 20
 
     # --- [追加] Tkinterウィンドウのセットアップ ---
     root = tk.Tk()
@@ -137,10 +130,12 @@ def main():
             running[0] = False
     root.bind('<Key>', on_key)
 
-    print("\n============================================")
-    print("カメラを起動しました（PIL＆Tkinter版）。")
-    print("終了するには、ウィンドウ上で 'q' キーを押すか、ウィンドウを閉じてください。")
-    print("============================================\n")
+    print("\n 終了するには、ウィンドウ上で 'q' キーを押すか、ウィンドウを閉じてください。")
+
+    game_started = False
+
+    start_x, start_y = 320, 280
+    start_radius = 20 
 
     while cap.isOpened() and running[0]:
         success, frame = cap.read()
@@ -170,57 +165,114 @@ def main():
 
                 cv2.circle(annotated_image, (fx, fy), 10, (0, 255, 255), -1)
 
-        cv2.circle(annotated_image, (center_x, center_y), judge_radius, (255, 255, 0), 3)#円形の判定ライン
+        #スタート画面
+        cv2.putText(annotated_image, "ここに触れたら始まります", (130, 220), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 3, cv2.LINE_AA)
+        cv2.circle(annotated_image, (start_x, start_y), start_radius, (255, 255, 255), -1)
+        cv2.circle(annotated_image, (start_x, start_y), start_radius + 5, (255, 255, 255), -1)
+        
+        for fx, fy in active_pointer_positions:
+            distance = math.sqrt((fx - start_x) ** 2 + (fy - start_y) ** 2)
+            if distance < (start_radius + 30):
+                game_started = True
+                break
 
-        for i in range(num_lanes):
-            angle = i * (2 * math.pi / num_lanes) #360度を8等分
-            line_end_x = int(center_x + 300 * math.cos(angle))
-            line_end_y = int(center_y + 300 * math.sin(angle))
-            cv2.line(annotated_image, (center_x, center_y), (line_end_x, line_end_y),(100,100,100), 1 )
+        if game_started:
+            break
 
-
-        for note in notes:
-            color = (255, 0, 0)
-            if not note["active"]:#noteがactiveでない（叩かれていたら）無視
-                continue
-
-            target_time = note["time"]
-            position = note["position"]
-
-            if target_time - scroll_time <= current_time <=target_time + 150:
-                ratio = (current_time - (target_time - scroll_time)) / scroll_time
-                angle = position * (2 * math.pi / num_lanes) #positionにより角度を決定
-                current_distance = ratio * judge_radius #現在の時間に応じた中心からの距離
-                note_x = int(center_x + current_distance * math.cos(angle))
-                note_y = int(center_y + current_distance * math.sin(angle))
-
-                time_diff = abs(current_time - target_time)
-
-                if time_diff <= 150:
-                    for fx, fy in active_pointer_positions:
-                        distance = math.sqrt((fx - note_x) ** 2 + (fy - note_y) ** 2)
-                        if distance < (note_radius + 35):
-                            note["active"] = False
-                            cv2.putText(annotated_image, "HIT!", (note_x - 20, judge_radius - 20), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 3)
-
-                cv2.circle(annotated_image, (note_x, note_y), note_radius, color, -1)
-                cv2.circle(annotated_image, (note_x, note_y), note_radius, (255, 255, 255), 2)
-
-        # --- [変更点] PILとTkinterによる画面更新 ---
-        # 1. NumPy（RGB）を PIL Image へ変換
         pil_image = Image.fromarray(annotated_image)
-
         # 2. ImageTk 形式へ変換
         imgtk = ImageTk.PhotoImage(image=pil_image)
-
         # print(f"現在の座標： {detection_result}")
         # 3. GUIの画像表示をアップデート
         label.config(image=imgtk)
         label.image = imgtk
-
         # 4. ウィンドウ全体の更新（描画を即時反映）
         root.update_idletasks()
         root.update()
+    #BGM再生
+    if os.path.exists(BGM_PATH) and running[0]:
+        pygame.mixer.music.load(BGM_PATH)
+        pygame.mixer.music.play() #-1：無限ループ
+
+        #ゲーム開始
+        while cap.isOpened() and running[0]:
+            success, frame = cap.read()
+            if not success:
+                print("カメラからの映像取得に失敗しました。")
+                break
+
+            # 鏡のように表示するために左右反転（メモリの連続性を確保）
+            frame = np.ascontiguousarray(cv2.flip(frame, 1))#水平方向反転
+            current_time = pygame.mixer.music.get_pos() #現在の再生時間
+            # OpenCV(BGR)からRGBへ変換
+            rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # NumPy配列からMediaPipeのImageオブジェクトを作成
+            mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
+            #手の骨格推定の実行
+            detection_result = detector.detect(mp_image)
+            active_pointer_positions = []
+            # 結果を画像に描画
+            annotated_image = draw_landmarks_on_image(rgb_frame, detection_result)
+
+            if detection_result.hand_landmarks:
+                for hand_landmarks in detection_result.hand_landmarks:
+                    judge_point = hand_landmarks[9]
+                    fx = int(judge_point.x * 640)
+                    fy = int(judge_point.y * 480)
+                    active_pointer_positions.append((fx, fy))
+                    cv2.circle(annotated_image, (fx, fy), 10, (0, 255, 255), -1)
+            
+            cv2.circle(annotated_image, (center_x, center_y), judge_radius, (255, 255, 0), 3)#円形の判定ライン
+
+            for i in range(num_lanes):
+                angle = i * (2 * math.pi / num_lanes) #360度を8等分
+                line_end_x = int(center_x + 300 * math.cos(angle))
+                line_end_y = int(center_y + 300 * math.sin(angle))
+                cv2.line(annotated_image, (center_x, center_y), (line_end_x, line_end_y),(100,100,100), 1 )
+
+
+            for note in notes:
+                color = (255, 0, 0)
+                if not note["active"]:#noteがactiveでない（叩かれていたら）無視
+                    continue
+
+                target_time = note["time"]
+                position = note["position"]
+
+                if target_time - scroll_time <= current_time <=target_time + 150:
+                    ratio = (current_time - (target_time - scroll_time)) / scroll_time
+                    angle = position * (2 * math.pi / num_lanes) #positionにより角度を決定
+                    current_distance = ratio * judge_radius #現在の時間に応じた中心からの距離
+                    note_x = int(center_x + current_distance * math.cos(angle))
+                    note_y = int(center_y + current_distance * math.sin(angle))
+
+                    time_diff = abs(current_time - target_time)
+
+                    if time_diff <= 150:
+                        for fx, fy in active_pointer_positions:
+                            distance = math.sqrt((fx - note_x) ** 2 + (fy - note_y) ** 2)
+                            if distance < (note_radius + 35):
+                                note["active"] = False
+                                cv2.putText(annotated_image, "HIT!", (note_x - 20, judge_radius - 20), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 255), 3)
+
+                    cv2.circle(annotated_image, (note_x, note_y), note_radius, color, -1)
+                    cv2.circle(annotated_image, (note_x, note_y), note_radius, (255, 255, 255), 2)
+
+            # PILとTkinterによる画面更新
+            # 1. NumPy（RGB）を PIL Image へ変換
+            pil_image = Image.fromarray(annotated_image)
+
+            # 2. ImageTk 形式へ変換
+            imgtk = ImageTk.PhotoImage(image=pil_image)
+
+            # print(f"現在の座標： {detection_result}")
+            # 3. GUIの画像表示をアップデート
+            label.config(image=imgtk)
+            label.image = imgtk
+
+            # 4. ウィンドウ全体の更新（描画を即時反映）
+            root.update_idletasks()
+            root.update()
 
     # クリーンアップ（cv2.destroyAllWindowsは不要になりました）
     cap.release()
