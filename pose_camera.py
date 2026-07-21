@@ -192,7 +192,7 @@ def main():
             h, w, _ = frame.shape
             
             center_x, center_y = w // 2, h // 2
-            judge_radius = int(h * 0.35)  # 判定ライン半径（画面高さの38%）
+            judge_radius = int(h * 0.28)  # 判定ライン半径（画面高さのn%）
 
             current_time = pygame.mixer.music.get_pos()
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
