@@ -117,6 +117,8 @@ def main():
     scroll_time = 2000
     note_radius = 20  # フルHDに合わせて少し大きめに調整
 
+    score = 0
+
     note_speed_power = 3.0 # 【追加】ノーツの移動カーブ設定
     # ------------------------------------------------------
     # スタート待機ループ
@@ -246,6 +248,8 @@ def main():
                             distance = math.sqrt((fx - note_x) ** 2 + (fy - note_y) ** 2)
                             if distance < (note_radius + 40):
                                 note["active"] = False
+                                score += 100
+                                print(f"score: {score}")
                                 cv2.putText(
                                     annotated_image, "HIT!", (note_x - 30, note_y - 30),
                                     cv2.FONT_HERSHEY_SIMPLEX, 1.2, (0, 255, 255), 3
@@ -254,6 +258,15 @@ def main():
                     cv2.circle(annotated_image, (note_x, note_y), note_radius, (255, 0, 0), -1)
                     cv2.circle(annotated_image, (note_x, note_y), note_radius, (255, 255, 255), 2)
 
+            cv2.putText(
+                annotated_image,
+                f"Score : {score}",
+                (350, 200),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                2,
+                (0, 255, 0),
+                10
+            )
             pil_image = Image.fromarray(annotated_image)
             imgtk = ImageTk.PhotoImage(image=pil_image)
 
