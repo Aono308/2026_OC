@@ -180,6 +180,7 @@ def main():
     # ------------------------------------------------------
     # メインゲームループ
     # ------------------------------------------------------
+    music_started = False #BGMが再生開始されたかのフラグ
     if os.path.exists(BGM_PATH) and running[0]:
         pygame.mixer.music.load(BGM_PATH)
         pygame.mixer.music.play()
@@ -190,6 +191,12 @@ def main():
                 print("カメラからの映像取得に失敗しました。")
                 break
 
+            if pygame.mixer.music.get_busy():
+                music_started = True
+            elif music_started:
+                print("音楽終了")
+                break
+            
             frame = np.ascontiguousarray(cv2.flip(frame, 1))
             h, w, _ = frame.shape
             
