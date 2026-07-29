@@ -85,7 +85,7 @@ def main():
     detector = vision.HandLandmarker.create_from_options(options)
 
     # STEP 2: カメラの初期化（フルHD要求）
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)
 
@@ -116,7 +116,6 @@ def main():
     num_lanes = 8
     scroll_time = 2000
     note_radius = 20  # フルHDに合わせて少し大きめに調整
-
     score = 0
 
     note_speed_power = 3.0 # 【追加】ノーツの移動カーブ設定
@@ -131,6 +130,7 @@ def main():
 
         frame = np.ascontiguousarray(cv2.flip(frame, 1))
         h, w, _ = frame.shape  # 実際の解像度を取得（例: 1920x1080）
+        judge_radius = int(h * 0.28)  # 判定ライン半径（画面高さのn%）
 
         # 画面中央および要素の座標定義
         center_x, center_y = w // 2, h // 2
@@ -143,6 +143,7 @@ def main():
         
         active_pointer_positions = []
         annotated_image = draw_landmarks_on_image(rgb_frame, detection_result)
+
 
         if detection_result.hand_landmarks:
             for hand_landmarks in detection_result.hand_landmarks:
@@ -160,6 +161,7 @@ def main():
         )
         cv2.circle(annotated_image, (start_x, start_y), start_radius, (255, 255, 255), -1)
         cv2.circle(annotated_image, (start_x, start_y), start_radius + 8, (0, 255, 255), 3)
+        cv2.circle(annotated_image, (center_x, center_y), judge_radius, (255, 255, 0), 4)
         
         for fx, fy in active_pointer_positions:
             distance = math.sqrt((fx - start_x) ** 2 + (fy - start_y) ** 2)
@@ -201,8 +203,7 @@ def main():
             h, w, _ = frame.shape
             
             center_x, center_y = w // 2, h // 2
-            judge_radius = int(h * 0.28)  # 判定ライン半径（画面高さのn%）
-
+            
             current_time = pygame.mixer.music.get_pos()
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
@@ -265,14 +266,29 @@ def main():
                     cv2.circle(annotated_image, (note_x, note_y), note_radius, (255, 0, 0), -1)
                     cv2.circle(annotated_image, (note_x, note_y), note_radius, (255, 255, 255), 2)
 
+            score_x = int(w * 0.02)
+            score_y = int(h * 0.08)
+
+            # font_scale = h / 700
+            # thickness = max(2, h // 300)
+
+            # cv2.putText(
+            #     annotated_image,
+            #     "TEST",
+            #     (800, 500),
+            #     cv2.FONT_HERSHEY_SIMPLEX,
+            #     3,
+            #     (255,255,255),
+            #     5
+            # )
             cv2.putText(
                 annotated_image,
                 f"Score : {score}",
-                (350, 200),
+                (center_x - 630, center_y - 280),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 2,
-                (0, 255, 0),
-                10
+                (255, 255, 255),
+                5
             )
             pil_image = Image.fromarray(annotated_image)
             imgtk = ImageTk.PhotoImage(image=pil_image)
