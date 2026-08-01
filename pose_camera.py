@@ -167,11 +167,17 @@ def main():
 
                 # スタート画面テキストとボタンを描画
                 cv2.putText(
-                    annotated_image, "Touch to Start", (center_x - 180, center_y - 50),
+                    annotated_image, "Touch to Start", (center_x - 160, center_y),
                     cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 255), 3, cv2.LINE_AA
                 )
-                cv2.circle(annotated_image, (start_x, start_y - 30), start_radius, (255, 255, 255), -1)
-                cv2.circle(annotated_image, (start_x, start_y - 30), start_radius + 8, (0, 255, 255), 3)
+
+                cv2.putText(
+                    annotated_image, "黄色の円全体に触れる位置に立ってください", (center_x - 400, center_y - 350),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 255), 3, cv2.LINE_AA
+                )
+                
+                cv2.circle(annotated_image, (start_x, start_y + 30), start_radius, (255, 255, 255), -1)
+                cv2.circle(annotated_image, (start_x, start_y + 30), start_radius + 8, (0, 255, 255), 3)
                 cv2.circle(annotated_image, (center_x, center_y - 30), judge_radius, (255, 255, 0), 4)
                 
                 for fx, fy in active_pointer_positions:
@@ -380,17 +386,22 @@ def main():
                         cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), 4, cv2.LINE_AA
                     )
 
-                    if score >= 4600:
+                    if score >= 4300:
                         cv2.putText(
-                            annotated_image, "RANK: S", (center_x - 210, center_y + 50),
+                            annotated_image, "RANK: SSS", (center_x - 210, center_y + 50),
                             cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), 4, cv2.LINE_AA
                         )
-                    elif score >= 3800 and score < 4600 :
+                    elif score >= 3500 and score < 4300 :
+                        cv2.putText(
+                                        annotated_image, "RANK: S", (center_x - 210, center_y + 50),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), 4, cv2.LINE_AA
+                                    )
+                    elif score >= 2500 and score < 3500:
                         cv2.putText(
                                         annotated_image, "RANK: A", (center_x - 210, center_y + 50),
                                         cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), 4, cv2.LINE_AA
                                     )
-                    elif score >= 2800 and score < 3800:
+                    elif score >= 1200 and score < 2500:
                         cv2.putText(
                                         annotated_image, "RANK: B", (center_x - 210, center_y + 50),
                                         cv2.FONT_HERSHEY_SIMPLEX, 2.0, (255, 255, 255), 4, cv2.LINE_AA
@@ -403,7 +414,7 @@ def main():
 
                     # 3. 再戦／終了のアナウンステキスト
                     cv2.putText(
-                        annotated_image, "Press 'Q' or Close to Exit", (center_x - 200, center_y + 230),
+                        annotated_image, "Press 'Q' or Close to Exit", (center_x - 150, center_y + 230),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (180, 180, 180), 2, cv2.LINE_AA
                     )
 
