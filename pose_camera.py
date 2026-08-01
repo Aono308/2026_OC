@@ -119,7 +119,9 @@ def main():
             def on_key(event):
                 if event.char == 'q':
                     running[0] = False
+                    root.destroy()
             root.bind('<Key>', on_key)
+            root.focus_force()
 
             print("\n 終了するには、ウィンドウ上で 'q' キーを押すか、ウィンドウを閉じてください。")
 
@@ -327,6 +329,7 @@ def main():
                 def on_key(event):
                     if event.char == 'q':
                         running[0] = False
+                        root.destroy()
                 root.bind('<Key>', on_key)
 
 
@@ -447,10 +450,6 @@ def main():
 
                     root.update_idletasks()
                     root.update()
-
-        # 終了処理
-        continuie
-        print("プログラムを再開。")
 
 if __name__ == "__main__":
     main()
