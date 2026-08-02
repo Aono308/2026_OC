@@ -118,7 +118,8 @@ def main():
 
             def on_key(event):
                 if event.char == 'q':
-                    running[0] = False
+                    # running[0] = False
+                    replay_requested = True
                     root.destroy()
             root.bind('<Key>', on_key)
             root.focus_force()
@@ -148,7 +149,7 @@ def main():
                 # 画面中央および要素の座標定義
                 center_x, center_y = w // 2, h // 2
                 start_x, start_y = center_x, center_y - 150
-                start_radius = 40
+                start_radius = 10
 
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
@@ -288,18 +289,6 @@ def main():
                     score_x = int(w * 0.02)
                     score_y = int(h * 0.08)
 
-                    # font_scale = h / 700
-                    # thickness = max(2, h // 300)
-
-                    # cv2.putText(
-                    #     annotated_image,
-                    #     "TEST",
-                    #     (800, 500),
-                    #     cv2.FONT_HERSHEY_SIMPLEX,
-                    #     3,
-                    #     (255,255,255),
-                    #     5
-                    # )
                     cv2.putText(
                         annotated_image,
                         f"Score : {score}",
@@ -309,6 +298,7 @@ def main():
                         (50, 100, 200),
                         5
                     )
+
                     pil_image = Image.fromarray(annotated_image)
                     imgtk = ImageTk.PhotoImage(image=pil_image, size=(WIDTH, HEIGHT))
 
